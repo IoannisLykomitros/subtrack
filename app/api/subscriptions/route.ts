@@ -40,3 +40,23 @@ export async function POST(request: Request) {
     );
   }
 }
+
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const userId = searchParams.get("userId");
+
+  if (!userId) {
+    return NextResponse.json({ error: "User ID required" }, { status: 400 });
+  }
+
+  try {
+    const subs = await prisma.subscription.findMany({
+      where: { userId: userId },
+      orderBy: { nextPayment: 'asc' } 
+    });
+
+    return NextResponse.json(subs);
+  } catch (error) {
+    return NextResponse.json({ error: "Failed to fetch" }, { status: 500 });
+  }
+}

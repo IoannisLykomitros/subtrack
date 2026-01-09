@@ -4,9 +4,20 @@ import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import { useRouter } from "next/navigation";
 
+interface Subscription {
+  id: string;
+  name: string;
+  price: number;
+  startDate: string;
+  nextPayment: string;
+  cycle: string;
+}
+
 export default function Dashboard() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
+  
+  const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
@@ -14,13 +25,29 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const checkUser = async () => {
+    const init = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) router.push("/login");
-      else setUser(session.user);
+      if (!session) {
+        router.push("/login");
+        return;
+      }
+      setUser(session.user);
+      fetchSubscriptions(session.user.id);
     };
-    checkUser();
+    init();
   }, [router]);
+
+  const fetchSubscriptions = async (userId: string) => {
+    try {
+      const res = await fetch(`/api/subscriptions?userId=${userId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setSubscriptions(data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch subs");
+    }
+  };
 
   const handleAddSubscription = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,7 +67,7 @@ export default function Dashboard() {
       });
 
       if (response.ok) {
-        alert("Subscription added!");
+        fetchSubscriptions(user.id); 
         setName("");
         setPrice("");
         setDate("");
@@ -49,7 +76,6 @@ export default function Dashboard() {
       }
     } catch (error) {
       console.error(error);
-      alert("Something went wrong");
     } finally {
       setLoading(false);
     }
@@ -69,56 +95,65 @@ export default function Dashboard() {
         <button onClick={handleLogout} className="bg-red-600 px-4 py-2 rounded">Sign Out</button>
       </div>
 
-      <div className="bg-gray-800 p-6 rounded-lg mb-8 max-w-2xl">
+      <div className="bg-gray-800 p-6 rounded-lg mb-8 max-w-2xl border border-gray-700">
         <h2 className="text-xl font-semibold mb-4">Add New Subscription</h2>
         <form onSubmit={handleAddSubscription} className="flex gap-4 items-end flex-wrap">
-          
           <div>
             <label className="block text-sm text-gray-400 mb-1">Name</label>
             <input 
-              type="text" 
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="bg-gray-700 p-2 rounded text-white" 
-              placeholder="Netflix" 
-              required
+              type="text" value={name} onChange={(e) => setName(e.target.value)}
+              className="bg-gray-700 p-2 rounded text-white" placeholder="Netflix" required
             />
           </div>
-
           <div>
             <label className="block text-sm text-gray-400 mb-1">Price</label>
             <input 
-              type="number" 
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
-              className="bg-gray-700 p-2 rounded text-white" 
-              placeholder="15.99" 
-              step="0.01"
-              required
+              type="number" value={price} onChange={(e) => setPrice(e.target.value)}
+              className="bg-gray-700 p-2 rounded text-white" placeholder="15.99" step="0.01" required
             />
           </div>
-
           <div>
             <label className="block text-sm text-gray-400 mb-1">Start Date</label>
             <input 
-              type="date" 
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className="bg-gray-700 p-2 rounded text-white" 
-              required
+              type="date" value={date} onChange={(e) => setDate(e.target.value)}
+              className="bg-gray-700 p-2 rounded text-white" required
             />
           </div>
-
-          <button 
-            type="submit" 
-            disabled={loading}
-            className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded font-bold"
-          >
-            {loading ? "Adding..." : "Add +"}
+          <button type="submit" disabled={loading} className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded font-bold">
+            {loading ? "..." : "Add +"}
           </button>
         </form>
       </div>
 
+      <h2 className="text-2xl font-bold mb-4">Your Subscriptions</h2>
+      
+      {subscriptions.length === 0 ? (
+        <p className="text-gray-500">No subscriptions yet. Add one above!</p>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {subscriptions.map((sub) => (
+            <div key={sub.id} className="bg-gray-800 p-5 rounded-lg border border-gray-700 hover:border-blue-500 transition">
+              <div className="flex justify-between items-start mb-2">
+                <h3 className="text-xl font-bold">{sub.name}</h3>
+                <span className="bg-blue-900 text-blue-200 text-xs px-2 py-1 rounded">
+                  {sub.cycle}
+                </span>
+              </div>
+              
+              <div className="text-3xl font-bold mb-2">
+                ${sub.price.toFixed(2)}
+              </div>
+              
+              <div className="text-sm text-gray-400">
+                Next Payment: <br />
+                <span className="text-white">
+                  {new Date(sub.nextPayment).toLocaleDateString()}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
