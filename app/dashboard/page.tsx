@@ -81,6 +81,24 @@ export default function Dashboard() {
     }
   };
 
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this subscription?")) return;
+
+    try {
+      const res = await fetch(`/api/subscriptions?id=${id}`, {
+        method: "DELETE",
+      });
+
+      if (res.ok) {
+        setSubscriptions(subscriptions.filter((sub) => sub.id !== id));
+      } else {
+        alert("Failed to delete");
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.push("/login");
@@ -132,10 +150,22 @@ export default function Dashboard() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {subscriptions.map((sub) => (
-            <div key={sub.id} className="bg-gray-800 p-5 rounded-lg border border-gray-700 hover:border-blue-500 transition">
+            <div key={sub.id} className="bg-gray-800 p-5 rounded-lg border border-gray-700 hover:border-blue-500 transition relative group">
+              
               <div className="flex justify-between items-start mb-2">
                 <h3 className="text-xl font-bold">{sub.name}</h3>
-                <span className="bg-blue-900 text-blue-200 text-xs px-2 py-1 rounded">
+                
+                <button 
+                  onClick={() => handleDelete(sub.id)}
+                  className="text-gray-500 hover:text-red-500 transition px-2"
+                  title="Delete Subscription"
+                >
+                  ✕
+                </button>
+              </div>
+              
+              <div className="flex items-center gap-2 mb-2">
+                 <span className="bg-blue-900 text-blue-200 text-xs px-2 py-1 rounded">
                   {sub.cycle}
                 </span>
               </div>
