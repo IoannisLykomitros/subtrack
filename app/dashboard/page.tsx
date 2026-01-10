@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import { useRouter } from "next/navigation";
 
@@ -36,6 +36,23 @@ export default function Dashboard() {
     };
     init();
   }, [router]);
+
+  
+  const analytics = useMemo(() => {
+    const totalMonthly = subscriptions.reduce((acc, sub) => {
+      if (sub.cycle === "Yearly") {
+        return acc + (sub.price / 12);
+      }
+      return acc + sub.price;
+    }, 0);
+
+    return {
+      monthly: totalMonthly,
+      yearly: totalMonthly * 12,
+      count: subscriptions.length
+    };
+  }, [subscriptions]);
+  
 
   const fetchSubscriptions = async (userId: string) => {
     try {
@@ -111,6 +128,43 @@ export default function Dashboard() {
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">My Dashboard</h1>
         <button onClick={handleLogout} className="bg-red-600 px-4 py-2 rounded">Sign Out</button>
+      </div>
+
+      {/* ANALYTICS SECTION */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        
+        {/* Card 1: Monthly Cost */}
+        <div className="bg-blue-900/30 border border-blue-800 p-6 rounded-lg">
+          <h3 className="text-gray-400 text-sm font-medium uppercase tracking-wider">
+            Monthly Spend
+          </h3>
+          <p className="text-4xl font-bold text-blue-100 mt-2">
+            ${analytics.monthly.toFixed(2)}
+          </p>
+        </div>
+
+        {/* Card 2: Yearly Cost */}
+        <div className="bg-purple-900/30 border border-purple-800 p-6 rounded-lg">
+          <h3 className="text-gray-400 text-sm font-medium uppercase tracking-wider">
+            Yearly Projection
+          </h3>
+          <p className="text-4xl font-bold text-purple-100 mt-2">
+            ${analytics.yearly.toFixed(2)}
+          </p>
+          <p className="text-xs text-purple-300 mt-1">
+            (Estimated)
+          </p>
+        </div>
+
+        {/* Card 3: Total Count */}
+        <div className="bg-gray-800 border border-gray-700 p-6 rounded-lg">
+          <h3 className="text-gray-400 text-sm font-medium uppercase tracking-wider">
+            Active Subs
+          </h3>
+          <p className="text-4xl font-bold text-white mt-2">
+            {analytics.count}
+          </p>
+        </div>
       </div>
 
       <div className="bg-gray-800 p-6 rounded-lg mb-8 max-w-2xl border border-gray-700">
