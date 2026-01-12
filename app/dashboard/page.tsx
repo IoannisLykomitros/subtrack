@@ -169,7 +169,7 @@ export default function Dashboard() {
             Monthly Spend
           </h3>
           <p className="text-4xl font-bold text-blue-100 mt-2">
-            ${analytics.monthly.toFixed(2)}
+            €{analytics.monthly.toFixed(2)}
           </p>
         </div>
 
@@ -178,7 +178,7 @@ export default function Dashboard() {
             Yearly Projection
           </h3>
           <p className="text-4xl font-bold text-purple-100 mt-2">
-            ${analytics.yearly.toFixed(2)}
+            €{analytics.yearly.toFixed(2)}
           </p>
           <p className="text-xs text-purple-300 mt-1">
             (Estimated)
@@ -280,7 +280,7 @@ export default function Dashboard() {
               </div>
               
               <div className="text-3xl font-bold mb-2">
-                ${sub.price.toFixed(2)}
+                €{sub.price.toFixed(2)}
               </div>
               
               <div className="text-sm text-gray-400">

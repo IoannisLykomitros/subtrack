@@ -15,6 +15,7 @@ model Subscription {
   startDate   DateTime
   nextPayment DateTime
   cycle       String
-  currency    String   @default("USD")
+  category    String   @default("Other") 
+  currency    String   @default("EUR")
   createdAt   DateTime @default(now())
 }
