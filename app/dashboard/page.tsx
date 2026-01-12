@@ -23,6 +23,7 @@ export default function Dashboard() {
   const [price, setPrice] = useState("");
   const [date, setDate] = useState("");
   const [loading, setLoading] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   useEffect(() => {
     const init = async () => {
@@ -66,33 +67,48 @@ export default function Dashboard() {
     }
   };
 
-  const handleAddSubscription = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const response = await fetch("/api/subscriptions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId: user.id,
-          name,
-          price,
-          startDate: date,
-          cycle: "Monthly",
-        }),
-      });
-
-      if (response.ok) {
-        fetchSubscriptions(user.id); 
-        setName("");
-        setPrice("");
-        setDate("");
+      if (editingId) {
+        const response = await fetch("/api/subscriptions", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: editingId, 
+            name,
+            price,
+            startDate: date,
+            cycle: "Monthly",
+          }),
+        });
+        
+        if (!response.ok) throw new Error("Failed to update");
+        
       } else {
-        alert("Failed to add subscription");
+        const response = await fetch("/api/subscriptions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId: user.id,
+            name,
+            price,
+            startDate: date,
+            cycle: "Monthly",
+          }),
+        });
+
+        if (!response.ok) throw new Error("Failed to add");
       }
+
+      fetchSubscriptions(user.id);
+      handleCancelEdit(); 
+
     } catch (error) {
       console.error(error);
+      alert("Operation failed");
     } finally {
       setLoading(false);
     }
@@ -116,6 +132,22 @@ export default function Dashboard() {
     }
   };
 
+  const handleEditClick = (sub: Subscription) => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    setName(sub.name);
+    setPrice(sub.price.toString());
+    setDate(new Date(sub.startDate).toISOString().split('T')[0]);
+    setEditingId(sub.id);
+  };
+  
+  const handleCancelEdit = () => {
+    setName("");
+    setPrice("");
+    setDate("");
+    setEditingId(null);
+  };
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.push("/login");
@@ -130,10 +162,8 @@ export default function Dashboard() {
         <button onClick={handleLogout} className="bg-red-600 px-4 py-2 rounded">Sign Out</button>
       </div>
 
-      {/* ANALYTICS SECTION */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         
-        {/* Card 1: Monthly Cost */}
         <div className="bg-blue-900/30 border border-blue-800 p-6 rounded-lg">
           <h3 className="text-gray-400 text-sm font-medium uppercase tracking-wider">
             Monthly Spend
@@ -143,7 +173,6 @@ export default function Dashboard() {
           </p>
         </div>
 
-        {/* Card 2: Yearly Cost */}
         <div className="bg-purple-900/30 border border-purple-800 p-6 rounded-lg">
           <h3 className="text-gray-400 text-sm font-medium uppercase tracking-wider">
             Yearly Projection
@@ -156,7 +185,6 @@ export default function Dashboard() {
           </p>
         </div>
 
-        {/* Card 3: Total Count */}
         <div className="bg-gray-800 border border-gray-700 p-6 rounded-lg">
           <h3 className="text-gray-400 text-sm font-medium uppercase tracking-wider">
             Active Subs
@@ -168,8 +196,10 @@ export default function Dashboard() {
       </div>
 
       <div className="bg-gray-800 p-6 rounded-lg mb-8 max-w-2xl border border-gray-700">
-        <h2 className="text-xl font-semibold mb-4">Add New Subscription</h2>
-        <form onSubmit={handleAddSubscription} className="flex gap-4 items-end flex-wrap">
+        <h2 className="text-xl font-semibold mb-4">
+          {editingId ? "Edit Subscription" : "Add New Subscription"}
+        </h2>
+        <form onSubmit={handleSubmit} className="flex gap-4 items-end flex-wrap">
           <div>
             <label className="block text-sm text-gray-400 mb-1">Name</label>
             <input 
@@ -191,9 +221,25 @@ export default function Dashboard() {
               className="bg-gray-700 p-2 rounded text-white" required
             />
           </div>
-          <button type="submit" disabled={loading} className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded font-bold">
-            {loading ? "..." : "Add +"}
-          </button>
+          <div className="flex gap-2">
+            {editingId && (
+              <button 
+                type="button" 
+                onClick={handleCancelEdit}
+                className="bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded font-bold"
+              >
+                Cancel
+              </button>
+            )}
+            
+            <button 
+              type="submit" 
+              disabled={loading} 
+              className={`${editingId ? 'bg-blue-600 hover:bg-blue-700' : 'bg-green-600 hover:bg-green-700'} text-white px-6 py-2 rounded font-bold`}
+            >
+              {loading ? "Saving..." : (editingId ? "Update" : "Add +")}
+            </button>
+          </div>
         </form>
       </div>
 
@@ -209,13 +255,22 @@ export default function Dashboard() {
               <div className="flex justify-between items-start mb-2">
                 <h3 className="text-xl font-bold">{sub.name}</h3>
                 
-                <button 
-                  onClick={() => handleDelete(sub.id)}
-                  className="text-gray-500 hover:text-red-500 transition px-2"
-                  title="Delete Subscription"
-                >
-                  ✕
-                </button>
+                <div className="flex gap-2">
+                  <button 
+                    onClick={() => handleEditClick(sub)}
+                    className="text-gray-500 hover:text-blue-400 transition"
+                    title="Edit"
+                  >
+                    ✎
+                  </button>
+                  <button 
+                    onClick={() => handleDelete(sub.id)}
+                    className="text-gray-500 hover:text-red-500 transition"
+                    title="Delete"
+                  >
+                    ✕
+                  </button>
+                </div>
               </div>
               
               <div className="flex items-center gap-2 mb-2">

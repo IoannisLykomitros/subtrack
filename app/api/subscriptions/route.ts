@@ -79,3 +79,32 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: "Failed to delete" }, { status: 500 });
   }
 }
+
+export async function PATCH(request: Request) {
+  try {
+    const body = await request.json();
+    const { id, name, price, startDate, cycle } = body;
+
+    if (!id) {
+      return NextResponse.json({ error: "ID required" }, { status: 400 });
+    }
+
+    const nextDate = new Date(startDate);
+    nextDate.setMonth(nextDate.getMonth() + 1);
+
+    const updatedSub = await prisma.subscription.update({
+      where: { id: id },
+      data: {
+        name,
+        price: parseFloat(price),
+        startDate: new Date(startDate),
+        nextPayment: nextDate,
+        cycle
+      },
+    });
+
+    return NextResponse.json(updatedSub, { status: 200 });
+  } catch (error) {
+    return NextResponse.json({ error: "Failed to update" }, { status: 500 });
+  }
+}
