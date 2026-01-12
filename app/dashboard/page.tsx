@@ -27,6 +27,7 @@ export default function Dashboard() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [cycle, setCycle] = useState("Monthly"); 
   const [category, setCategory] = useState("Entertainment"); 
+  const [filter, setFilter] = useState("All");
 
   useEffect(() => {
     const init = async () => {
@@ -162,6 +163,11 @@ export default function Dashboard() {
 
   if (!user) return <div className="p-10 text-white">Loading...</div>;
 
+  const filteredSubs = subscriptions.filter(sub => {
+    if (filter === "All") return true;
+    return sub.category === filter;
+  });
+
   return (
     <div className="min-h-screen bg-gray-900 text-white p-8">
       <div className="flex justify-between items-center mb-8">
@@ -264,13 +270,31 @@ export default function Dashboard() {
         </form>
       </div>
 
-      <h2 className="text-2xl font-bold mb-4">Your Subscriptions</h2>
+      <div className="flex flex-col justify-between items-start mb-4 gap-4">
+        <h2 className="text-2xl font-bold">Your Subscriptions</h2>
+        
+        <div className="flex gap-2 bg-gray-800 p-1 rounded-lg">
+          {["All", "Entertainment", "Utilities", "Personal", "Dev Tools", "Work"].map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setFilter(cat)}
+              className={`px-3 py-1 rounded-md text-sm transition ${
+                filter === cat 
+                  ? "bg-blue-600 text-white shadow" 
+                  : "text-gray-400 hover:text-white"
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+      </div>
       
-      {subscriptions.length === 0 ? (
-        <p className="text-gray-500">No subscriptions yet. Add one above!</p>
+      {filteredSubs.length === 0 ? (
+        <p className="text-gray-500">No subscriptions found in this category.</p>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {subscriptions.map((sub) => (
+          {filteredSubs.map((sub) => (
             <div key={sub.id} className="bg-gray-800 p-5 rounded-lg border border-gray-700 hover:border-blue-500 transition relative group">
               
               <div className="flex justify-between items-start mb-2">
