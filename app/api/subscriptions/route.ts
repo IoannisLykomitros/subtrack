@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { userId, name, price, startDate, cycle } = body;
+    const { userId, name, price, startDate, cycle, category } = body;
 
     if (!userId || !name || !price) {
       return NextResponse.json(
@@ -27,6 +27,7 @@ export async function POST(request: Request) {
         startDate: new Date(startDate),
         nextPayment: nextDate,
         cycle,
+        category,
       },
     });
 
@@ -83,7 +84,7 @@ export async function DELETE(request: Request) {
 export async function PATCH(request: Request) {
   try {
     const body = await request.json();
-    const { id, name, price, startDate, cycle } = body;
+    const { id, name, price, startDate, cycle, category } = body;
 
     if (!id) {
       return NextResponse.json({ error: "ID required" }, { status: 400 });
@@ -99,7 +100,8 @@ export async function PATCH(request: Request) {
         price: parseFloat(price),
         startDate: new Date(startDate),
         nextPayment: nextDate,
-        cycle
+        cycle,
+        category,
       },
     });
 

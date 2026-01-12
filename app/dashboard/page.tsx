@@ -11,6 +11,7 @@ interface Subscription {
   startDate: string;
   nextPayment: string;
   cycle: string;
+  category: string;
 }
 
 export default function Dashboard() {
@@ -24,6 +25,8 @@ export default function Dashboard() {
   const [date, setDate] = useState("");
   const [loading, setLoading] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [cycle, setCycle] = useState("Monthly"); 
+  const [category, setCategory] = useState("Entertainment"); 
 
   useEffect(() => {
     const init = async () => {
@@ -82,6 +85,7 @@ export default function Dashboard() {
             price,
             startDate: date,
             cycle: "Monthly",
+            category,
           }),
         });
         
@@ -97,6 +101,7 @@ export default function Dashboard() {
             price,
             startDate: date,
             cycle: "Monthly",
+            category,
           }),
         });
 
@@ -139,6 +144,7 @@ export default function Dashboard() {
     setPrice(sub.price.toString());
     setDate(new Date(sub.startDate).toISOString().split('T')[0]);
     setEditingId(sub.id);
+    setCategory(sub.category);
   };
   
   const handleCancelEdit = () => {
@@ -146,6 +152,7 @@ export default function Dashboard() {
     setPrice("");
     setDate("");
     setEditingId(null);
+    setCategory("Entertainment");
   };
 
   const handleLogout = async () => {
@@ -215,6 +222,20 @@ export default function Dashboard() {
             />
           </div>
           <div>
+            <label className="block text-sm text-gray-400 mb-1">Category</label>
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className="bg-gray-700 p-2 rounded text-white w-full"
+            >
+              <option value="Entertainment">Entertainment</option>
+              <option value="Utilities">Utilities</option>
+              <option value="Personal">Personal</option>
+              <option value="Dev Tools">Dev Tools</option>
+              <option value="Work">Work</option>
+            </select>
+          </div>
+          <div>
             <label className="block text-sm text-gray-400 mb-1">Start Date</label>
             <input 
               type="date" value={date} onChange={(e) => setDate(e.target.value)}
@@ -276,6 +297,9 @@ export default function Dashboard() {
               <div className="flex items-center gap-2 mb-2">
                  <span className="bg-blue-900 text-blue-200 text-xs px-2 py-1 rounded">
                   {sub.cycle}
+                </span>
+                 <span className="bg-purple-900 text-purple-200 text-xs px-2 py-1 rounded">
+                  {sub.category}
                 </span>
               </div>
               
