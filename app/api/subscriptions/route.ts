@@ -4,6 +4,28 @@ import { supabase } from "@/lib/supabaseClient";
 
 const prisma = new PrismaClient();
 
+function calculateNextDate(startDate: Date, cycle: string): Date {
+  const date = new Date(startDate);
+  switch (cycle) {
+    case "Weekly":
+      date.setDate(date.getDate() + 7);
+      break;
+    case "Quarterly":
+      date.setMonth(date.getMonth() + 3);
+      break;
+    case "Biannually": 
+      date.setMonth(date.getMonth() + 6);
+      break;
+    case "Yearly":
+      date.setFullYear(date.getFullYear() + 1);
+      break;
+    case "Monthly":
+    default:
+      date.setMonth(date.getMonth() + 1);
+      break;
+  }
+  return date;
+}
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -16,8 +38,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const nextDate = new Date(startDate);
-    nextDate.setMonth(nextDate.getMonth() + 1);
+    const nextDate = calculateNextDate(new Date(startDate), cycle);
 
     const newSubscription = await prisma.subscription.create({
       data: {
@@ -90,8 +111,7 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: "ID required" }, { status: 400 });
     }
 
-    const nextDate = new Date(startDate);
-    nextDate.setMonth(nextDate.getMonth() + 1);
+    const nextDate = calculateNextDate(new Date(startDate), cycle);
 
     const updatedSub = await prisma.subscription.update({
       where: { id: id },

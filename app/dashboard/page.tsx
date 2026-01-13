@@ -45,10 +45,19 @@ export default function Dashboard() {
   
   const analytics = useMemo(() => {
     const totalMonthly = subscriptions.reduce((acc, sub) => {
+      let monthlyPrice = sub.price;
+
       if (sub.cycle === "Yearly") {
-        return acc + (sub.price / 12);
+        monthlyPrice = sub.price / 12;
+      } else if (sub.cycle === "Biannually") {
+        monthlyPrice = sub.price / 6;
+      } else if (sub.cycle === "Quarterly") {
+        monthlyPrice = sub.price / 3;
+      } else if (sub.cycle === "Weekly") {
+        monthlyPrice = sub.price * 4.33;
       }
-      return acc + sub.price;
+      
+      return acc + monthlyPrice;
     }, 0);
 
     return {
@@ -57,7 +66,6 @@ export default function Dashboard() {
       count: subscriptions.length
     };
   }, [subscriptions]);
-  
 
   const fetchSubscriptions = async (userId: string) => {
     try {
@@ -85,7 +93,7 @@ export default function Dashboard() {
             name,
             price,
             startDate: date,
-            cycle: "Monthly",
+            cycle,
             category,
           }),
         });
@@ -101,7 +109,7 @@ export default function Dashboard() {
             name,
             price,
             startDate: date,
-            cycle: "Monthly",
+            cycle,
             category,
           }),
         });
@@ -146,6 +154,7 @@ export default function Dashboard() {
     setDate(new Date(sub.startDate).toISOString().split('T')[0]);
     setEditingId(sub.id);
     setCategory(sub.category);
+    setCycle(sub.cycle);
   };
   
   const handleCancelEdit = () => {
@@ -154,6 +163,7 @@ export default function Dashboard() {
     setDate("");
     setEditingId(null);
     setCategory("Entertainment");
+    setCycle("Monthly");
   };
 
   const handleLogout = async () => {
@@ -239,6 +249,20 @@ export default function Dashboard() {
               <option value="Personal">Personal</option>
               <option value="Dev Tools">Dev Tools</option>
               <option value="Work">Work</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm text-gray-400 mb-1">Billing Cycle</label>
+            <select
+              value={cycle}
+              onChange={(e) => setCycle(e.target.value)}
+              className="bg-gray-700 p-2 rounded text-white w-full"
+            >
+              <option value="Weekly">Weekly</option>
+              <option value="Monthly">Monthly</option>
+              <option value="Quarterly">3 Months</option>
+              <option value="Biannually">6 Months</option>
+              <option value="Yearly">Yearly</option>
             </select>
           </div>
           <div>
